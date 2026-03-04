@@ -9,8 +9,8 @@ validate_input() {
     exit 1
   fi
 
-  if [[ "$type" == "name" && -f "$input_value" ]]; then
-    echo "File already exists. Try again."
+  if [[ "$type" == "name" && -d "$input_value" ]]; then
+    echo "Project already exists. Try again."
     exit 1
   fi
 
@@ -25,15 +25,50 @@ create_project() {
   local template=$1
   local project_name=$2
 
+  # Determine config file extension
+  local config_ext="js"
+  if [[ "$template" == "react-ts" ]]; then
+    config_ext="ts"
+  fi
+
   if command -v create-vite &>/dev/null; then
-    create-vite -t "$template" "$project_name"
+    yes n | create-vite "$project_name" -t "$template"
   elif command -v npm &>/dev/null; then
     echo "create-vite not found globally, using npx..."
-    npx create-vite@latest -t "$template" "$project_name"
+    yes n | npm exec create-vite@latest "$project_name" -- -t "$template"
   else
     echo "Error: npm or create-vite CLI not found. Install Node.js first."
     echo "You can install Nodejs from https://nodejs.org/en"
     exit 1
+  fi
+
+  cd "$project_name" || exit
+
+  npm install axios dotenv tailwindcss @tailwindcss/vite lucide-react
+
+  # Create config file with correct extension
+  cat >"vite.config.${config_ext}" <<'EOF'
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
+})
+EOF
+
+  # Find and update CSS file
+  globalcss=$(find ./src -type f -name "index.css")
+  if [[ -n "$globalcss" ]]; then
+    echo "@import 'tailwindcss';" >"$globalcss"
+    echo "Updated $globalcss with Tailwind import"
+  else
+    echo "Warning: index.css not found in ./src"
+    echo "@import 'tailwindcss';" >./src/index.css
+    echo "Created ./src/index.css with Tailwind import"
   fi
 }
 
