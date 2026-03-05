@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
+set -e
+
+# -------------------------------
+# Input Validation
+# -------------------------------
 validate_input() {
   local input_value=$1
-  local type=$2 # "name" or "flavour"
+  local type=$2
 
   if [[ -z "$input_value" ]]; then
     echo "The input for ${type} is empty. Try again."
@@ -20,33 +25,38 @@ validate_input() {
   fi
 }
 
-# Helper to create Vite project, either with global CLI or npx
+# -------------------------------
+# Project Creation Function
+# -------------------------------
 create_project() {
+
   local template=$1
   local project_name=$2
 
-  # Determine config file extension
-  local config_ext="js"
+  config_ext="js"
+  app_file="App.jsx"
+
   if [[ "$template" == "react-ts" ]]; then
     config_ext="ts"
+    app_file="App.tsx"
   fi
 
   if command -v create-vite &>/dev/null; then
     yes n | create-vite "$project_name" -t "$template"
-  elif command -v npm &>/dev/null; then
-    echo "create-vite not found globally, using npx..."
-    yes n | npm exec create-vite@latest "$project_name" -- -t "$template"
   else
-    echo "Error: npm or create-vite CLI not found. Install Node.js first."
-    echo "You can install Nodejs from https://nodejs.org/en"
-    exit 1
+    echo "create-vite not found globally, using npm exec..."
+    yes n | npm exec create-vite@latest "$project_name" -- -t "$template"
   fi
 
   cd "$project_name" || exit
 
-  npm install axios dotenv tailwindcss @tailwindcss/vite lucide-react
+  rm -f src/App.css
 
-  # Create config file with correct extension
+  npm install
+  npm install axios dotenv tailwindcss @tailwindcss/vite lucide-react
+  npm install -D @vitejs/plugin-react
+
+  # Vite config
   cat >"vite.config.${config_ext}" <<'EOF'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -60,28 +70,157 @@ export default defineConfig({
 })
 EOF
 
-  # Find and update CSS file
   globalcss=$(find ./src -type f -name "index.css")
+
   if [[ -n "$globalcss" ]]; then
     echo "@import 'tailwindcss';" >"$globalcss"
-    echo "Updated $globalcss with Tailwind import"
   else
-    echo "Warning: index.css not found in ./src"
     echo "@import 'tailwindcss';" >./src/index.css
-    echo "Created ./src/index.css with Tailwind import"
   fi
+
+  # App component with logos and icon
+  cat >"./src/${app_file}" <<'EOF'
+import { Terminal } from "lucide-react";
+import Reactimg from "./assets/react.svg";
+import Viteimg from "/vite.svg";
+
+export default function App() {
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+      <div className="text-center space-y-6">
+
+        <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
+          REACT
+          <img src={Reactimg} className="h-10" alt="React logo" />
+          +
+          VITE
+          <img src={Viteimg} className="h-10" alt="Vite logo" />
+        </h1>
+
+        <p className="text-slate-400 flex items-center justify-center gap-2">
+          Automated with Bash
+          <Terminal size={64} className="text-emerald-400" />
+        </p>
+
+        <p className="text-sm text-slate-500">
+          Your development environment was scaffolded automatically.
+        </p>
+
+      </div>
+    </main>
+  );
+}
+EOF
+
+  cd src
+  mkdir -p components contexts pages routes types
+  cd ..
+
+  # Initialize Git
+  if command -v git &>/dev/null; then
+    git init
+    cat >.gitignore <<EOF
+node_modules
+dist
+.env
+.vscode
+.DS_Store
+EOF
+    git add .
+    git commit -m "Initial commit: React + Vite setup automated with bash"
+  fi
+
+  # Create .env.example
+  cat >.env.example <<EOF
+VITE_API_URL=
+EOF
+
+  # Create .env from .env.example if missing
+  if [[ ! -f ".env" ]]; then
+    cp .env.example .env
+    echo ".env file created from .env.example"
+  fi
+
+  # React project README
+  cat >README.md <<EOF
+# ${project_name}
+
+> React + Vite Development Starter
+
+This project was **automatically scaffolded** using a Bash script to set up a modern React environment with **TailwindCSS**, **Lucide Icons**, and common utilities.
+
+---
+
+## 🛠 Features
+
+- JavaScript or TypeScript support
+- Interactive input validation
+- Preinstalled dependencies: axios, dotenv, tailwindcss, @tailwindcss/vite, lucide-react
+- Configured Vite with React & Tailwind plugin
+- Clean project structure: components/, contexts/, pages/, routes/, types/
+- Git initialized with .gitignore
+- Ready-to-use starter App
+
+---
+
+## ⚡ Usage
+
+\`\`\`bash
+cd ${project_name}
+npm run dev
+\`\`\`
+
+Ensure \$(.env) exists (copied from \$(.env.example)):
+\`\`\`bash
+cp .env.example .env
+\`\`\`
+
+Open browser at [http://localhost:5173](http://localhost:5173)
+
+---
+
+## 📂 Folder Structure
+
+\`\`\`text
+src/
+ ├─ components/
+ ├─ contexts/
+ ├─ pages/
+ ├─ routes/
+ ├─ types/
+ ├─ App.${config_ext}
+ └─ index.css
+\`\`\`
+
+---
+
+## 🎨 Notes
+
+- TailwindCSS is ready
+- Lucide-react icons available
+- Remove demo code and start building your app
+EOF
+
+  chmod -R 755 .
+
+  echo ""
+  echo "✅ Project created successfully."
+  echo ""
+  echo "Next steps:"
+  echo "cd ${project_name}"
+  echo "npm run dev"
 }
 
-# Prompt project name
+# -------------------------------
+# Script Entry Point
+# -------------------------------
 read -p $'Enter the name of the react(ts) project: \n> ' project_name
 validate_input "$project_name" "name"
 
-# Prompt flavour
 echo -e "Choose a Flavour to use:\n1) JavaScript (js)\n2) TypeScript (ts)"
 read -p $'Enter choice (1 or 2): \n> ' flavour_type
 validate_input "$flavour_type" "flavour"
 
-# Create project based on flavour
 case "$flavour_type" in
 1)
   echo "Project Name: ${project_name} - Flavour: JavaScript"
@@ -93,5 +232,6 @@ case "$flavour_type" in
   ;;
 *)
   echo "Answer is not valid"
+  exit 1
   ;;
 esac

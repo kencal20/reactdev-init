@@ -1,28 +1,44 @@
-# React Development Project Initializer
+# -------------------------------
+# Bash Automation README (for script repo itself)
+# -------------------------------
+cat >README.md <<'EOF'
+# React Development Project Initializer (Bash Script)
 
-This repository contains a Bash script (`main.sh`) to quickly bootstrap a new React project with **JavaScript or TypeScript**, preconfigured with **Vite**, **TailwindCSS**, and some common utilities.
-
----
-
-## Features
-
-- Interactive script to create **React (JS/TS) projects**.
-- Automatic **input validation** for project name and flavour.
-- Supports both **global `create-vite` CLI** and **npx fallback**.
-- Installs additional dependencies:  
-  - `axios` – HTTP requests  
-  - `dotenv` – Environment variables  
-  - `tailwindcss` & `@tailwindcss/vite` – Styling  
-  - `lucide-react` – Icon library
-- Generates a **Vite config** (`vite.config.js` / `vite.config.ts`) with Tailwind plugin.
-- Automatically updates or creates `src/index.css` with Tailwind import.
+> Bootstrap modern React + Vite projects automatically
 
 ---
 
-## Usage
+## 🚀 Overview
 
-1. Clone the repository:
+This repository contains a Bash script (`main.sh`) to quickly create new React projects with **JavaScript or TypeScript**, preconfigured with:
+
+- **Vite** for fast builds
+- **TailwindCSS** for styling
+- **Axios** for HTTP requests
+- **Lucide React** icons
+- Git repository initialization
+- Clean folder structure
+
+The script focuses only on **tooling setup**, leaving architecture (routes, state, layouts) to the developer.
+
+---
+
+## 🛠 Features
+
+- Interactive prompts for project name and flavour (JS / TS)
+- Input validation
+- Global `create-vite` or npx fallback
+- Preinstalled dependencies
+- Configured Vite + Tailwind
+- Creates folders: components, contexts, pages, routes, types
+- Initializes Git and `.gitignore`
+- Creates `.env.example`
+
+---
+
+## ⚡ Usage
 
 ```bash
 git clone <repo-url>
 cd reactdev-init
+./main.sh
