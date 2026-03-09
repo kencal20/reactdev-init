@@ -3,6 +3,23 @@
 set -e
 
 # -------------------------------
+# Dependency Validation
+# -------------------------------
+validate_dependencies() {
+  if ! command -v node &>/dev/null; then
+    echo "Error: Node.js is not installed."
+    echo "Install Node.js from https://nodejs.org"
+    exit 1
+  fi
+
+  if ! command -v npm &>/dev/null; then
+    echo "Error: npm is not installed."
+    echo "Install Node.js from https://nodejs.org"
+    exit 1
+  fi
+}
+
+# -------------------------------
 # Input Validation
 # -------------------------------
 validate_input() {
@@ -78,7 +95,7 @@ EOF
     echo "@import 'tailwindcss';" >./src/index.css
   fi
 
-  # App component with logos and icon
+  # App component
   cat >"./src/${app_file}" <<'EOF'
 import { Terminal } from "lucide-react";
 import Reactimg from "./assets/react.svg";
@@ -130,58 +147,51 @@ EOF
     git commit -m "Initial commit: React + Vite setup automated with bash"
   fi
 
-  # Create .env.example
+  # Create env files
   cat >.env.example <<EOF
 VITE_API_URL=
 EOF
 
-  # Create .env from .env.example if missing
   if [[ ! -f ".env" ]]; then
     cp .env.example .env
     echo ".env file created from .env.example"
   fi
 
-  # React project README
+  # Project README
   cat >README.md <<EOF
 # ${project_name}
 
 > React + Vite Development Starter
 
-This project was **automatically scaffolded** using a Bash script to set up a modern React environment with **TailwindCSS**, **Lucide Icons**, and common utilities.
+This project was **automatically scaffolded** using a Bash script.
 
 ---
 
-## 🛠 Features
+## Features
 
 - JavaScript or TypeScript support
-- Interactive input validation
-- Preinstalled dependencies: axios, dotenv, tailwindcss, @tailwindcss/vite, lucide-react
-- Configured Vite with React & Tailwind plugin
-- Clean project structure: components/, contexts/, pages/, routes/, types/
-- Git initialized with .gitignore
-- Ready-to-use starter App
+- TailwindCSS configured
+- Axios installed
+- Lucide React icons
+- Git initialized
+- Prebuilt project structure
 
 ---
 
-## ⚡ Usage
+## Usage
 
 \`\`\`bash
 cd ${project_name}
 npm run dev
 \`\`\`
 
-Ensure \$(.env) exists (copied from \$(.env.example)):
-\`\`\`bash
-cp .env.example .env
-\`\`\`
-
-Open browser at [http://localhost:5173](http://localhost:5173)
+Open: http://localhost:5173
 
 ---
 
-## 📂 Folder Structure
+## Structure
 
-\`\`\`text
+\`\`\`
 src/
  ├─ components/
  ├─ contexts/
@@ -191,17 +201,7 @@ src/
  ├─ App.${config_ext}
  └─ index.css
 \`\`\`
-
----
-
-## 🎨 Notes
-
-- TailwindCSS is ready
-- Lucide-react icons available
-- Remove demo code and start building your app
 EOF
-
-  chmod -R 755 .
 
   echo ""
   echo "✅ Project created successfully."
@@ -214,6 +214,8 @@ EOF
 # -------------------------------
 # Script Entry Point
 # -------------------------------
+validate_dependencies
+
 read -p $'Enter the name of the react(ts) project: \n> ' project_name
 validate_input "$project_name" "name"
 
