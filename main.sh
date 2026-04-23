@@ -68,15 +68,14 @@ create_project() {
   rm -f src/App.css
 
   npm install
+  # Added @types/node for path/dirname support
   npm install axios dotenv tailwindcss @tailwindcss/vite lucide-react
-  npm install -D @vitejs/plugin-react
+  npm install -D @vitejs/plugin-react @types/node
 
   # -------------------------------
-  # Vite Config (with optional alias)
+  # Vite Config
   # -------------------------------
   if [[ "$use_alias" == "y" ]]; then
-    npm install -D path
-
     cat >"vite.config.${config_ext}" <<'EOF'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -145,9 +144,9 @@ EOF
   mkdir -p src/components src/contexts src/pages src/routes src/types
 
   # -------------------------------
-  # TS Alias config
+  # TS Config (Updated for TS 5.0+ / 2026 Standards)
   # -------------------------------
-  if [[ "$template" == "react-ts" && "$use_alias" == "y" ]]; then
+  if [[ "$template" == "react-ts" ]]; then
     cat >tsconfig.json <<'EOF'
 {
   "compilerOptions": {
@@ -156,8 +155,7 @@ EOF
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "skipLibCheck": true,
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
@@ -166,14 +164,19 @@ EOF
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"]
 }
 EOF
+    # Remove paths if alias not requested
+    if [[ "$use_alias" != "y" ]]; then
+      sed -i '/"paths":/,/}/d' tsconfig.json
+      # Cleanup potential trailing comma from previous line
+      sed -i 's/"jsx": "react-jsx",/"jsx": "react-jsx"/' tsconfig.json
+    fi
   fi
 
   # -------------------------------
@@ -209,7 +212,7 @@ src/
  ├─ contexts/
  ├─ pages/
  ├─ routes/
- ├─ types/
+ └─ types/
 EOF
 
   echo ""
