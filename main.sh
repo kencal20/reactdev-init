@@ -69,7 +69,7 @@ create_project() {
 
   npm install
   # Added @types/node for path/dirname support
-  npm install axios dotenv tailwindcss @tailwindcss/vite lucide-react
+  npm install axios dotenv tailwindcss@^4 @tailwindcss/vite@^4 lucide-react
   npm install -D @vitejs/plugin-react @types/node
 
   # -------------------------------
