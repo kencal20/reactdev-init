@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -e
 
 # -------------------------------
@@ -10,7 +9,6 @@ validate_dependencies() {
     echo "Error: Node.js is not installed."
     exit 1
   fi
-
   if ! command -v npm &>/dev/null; then
     echo "Error: npm is not installed."
     exit 1
@@ -64,11 +62,11 @@ create_project() {
   fi
 
   cd "$project_name" || exit
-
   rm -f src/App.css
 
   npm install
-  # Added @types/node for path/dirname support
+
+  # Dependencies
   npm install axios dotenv tailwindcss@^4 @tailwindcss/vite@^4 lucide-react
   npm install -D @vitejs/plugin-react @types/node
 
@@ -127,7 +125,6 @@ export default function App() {
           VITE
           <img src={Viteimg} className="h-10" />
         </h1>
-
         <p className="text-slate-400 flex items-center justify-center gap-2">
           Automated with Bash
           <Terminal size={64} className="text-emerald-400" />
@@ -144,7 +141,46 @@ EOF
   mkdir -p src/components src/contexts src/pages src/routes src/types
 
   # -------------------------------
-  # TS Config (Updated for TS 5.0+ / 2026 Standards)
+  # Vite env / asset types (fixes SVG import errors in TS)
+  # -------------------------------
+  if [[ "$template" == "react-ts" ]]; then
+    cat >src/vite-env.d.ts <<'EOF'
+/// <reference types="vite/client" />
+
+declare module "*.svg" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.png" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.jpg" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.jpeg" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.gif" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.webp" {
+  const content: string;
+  export default content;
+}
+EOF
+  fi
+
+  # -------------------------------
+  # TS Config
   # -------------------------------
   if [[ "$template" == "react-ts" ]]; then
     cat >tsconfig.json <<'EOF'
@@ -171,6 +207,7 @@ EOF
   "include": ["src"]
 }
 EOF
+
     # Remove paths if alias not requested
     if [[ "$use_alias" != "y" ]]; then
       sed -i '/"paths":/,/}/d' tsconfig.json
@@ -204,15 +241,19 @@ EOF
 React + Vite starter (automated)
 
 ## Run
+\`\`\`bash
 npm run dev
+\`\`\`
 
 ## Structure
+\`\`\`
 src/
  ├─ components/
  ├─ contexts/
  ├─ pages/
  ├─ routes/
  └─ types/
+\`\`\`
 EOF
 
   echo ""
