@@ -44,7 +44,6 @@ validate_input() {
 create_project() {
   local template=$1
   local project_name=$2
-  local use_alias=$3
 
   config_ext="js"
   app_file="App.jsx"
@@ -54,43 +53,20 @@ create_project() {
     app_file="App.tsx"
   fi
 
-  # Create project
-  if command -v create-vite &>/dev/null; then
-    yes n | create-vite "$project_name" -t "$template"
-  else
-    yes n | npm exec create-vite@latest "$project_name" -- -t "$template"
-  fi
+  # Pass --yes to npm exec to prevent interactive package prompts
+  printf '\n' | npm exec --yes create-vite@latest "$project_name" -- --template "$template"
 
   cd "$project_name" || exit
   rm -f src/App.css
-
-  npm install
 
   # Dependencies
   npm install axios dotenv tailwindcss@^4 @tailwindcss/vite@^4 lucide-react
   npm install -D @vitejs/plugin-react @types/node
 
   # -------------------------------
-  # Vite Config
+  # Vite Config (Clean setup without aliases)
   # -------------------------------
-  if [[ "$use_alias" == "y" ]]; then
-    cat >"vite.config.${config_ext}" <<'EOF'
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
-
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-})
-EOF
-  else
-    cat >"vite.config.${config_ext}" <<'EOF'
+  cat <<'EOF' >"vite.config.${config_ext}"
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -99,7 +75,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
 })
 EOF
-  fi
 
   # -------------------------------
   # Tailwind setup
@@ -109,10 +84,10 @@ EOF
   # -------------------------------
   # App Component
   # -------------------------------
-  cat >"./src/${app_file}" <<'EOF'
+  cat <<'EOF' >"./src/${app_file}"
 import { Terminal } from "lucide-react";
 import Reactimg from "./assets/react.svg";
-import Viteimg from "/vite.svg";
+import Viteimg from "./assets/vite.svg";
 
 export default function App() {
   return (
@@ -141,10 +116,10 @@ EOF
   mkdir -p src/components src/contexts src/pages src/routes src/types
 
   # -------------------------------
-  # Vite env / asset types (fixes SVG import errors in TS)
+  # Vite env / asset types
   # -------------------------------
   if [[ "$template" == "react-ts" ]]; then
-    cat >src/vite-env.d.ts <<'EOF'
+    cat <<'EOF' >src/vite-env.d.ts
 /// <reference types="vite/client" />
 
 declare module "*.svg" {
@@ -180,10 +155,10 @@ EOF
   fi
 
   # -------------------------------
-  # TS Config
+  # TS Config (Clean setup without paths key)
   # -------------------------------
   if [[ "$template" == "react-ts" ]]; then
-    cat >tsconfig.json <<'EOF'
+    cat <<'EOF' >tsconfig.json
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -199,21 +174,11 @@ EOF
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "jsx": "react-jsx"
   },
   "include": ["src"]
 }
 EOF
-
-    # Remove paths if alias not requested
-    if [[ "$use_alias" != "y" ]]; then
-      sed -i '/"paths":/,/}/d' tsconfig.json
-      # Cleanup potential trailing comma from previous line
-      sed -i 's/"jsx": "react-jsx",/"jsx": "react-jsx"/' tsconfig.json
-    fi
   fi
 
   # -------------------------------
@@ -262,7 +227,7 @@ EOF
 }
 
 # -------------------------------
-# ENTRY
+# ENTRY POINT
 # -------------------------------
 validate_dependencies
 
@@ -273,9 +238,7 @@ echo -e "Choose:\n1) JavaScript\n2) TypeScript"
 read -p $'> ' -r flavour
 validate_input "$flavour" "flavour"
 
-read -p $'Enable @ alias? (y/n):\n> ' -r use_alias
-
 case "$flavour" in
-1) create_project "react" "$project_name" "$use_alias" ;;
-2) create_project "react-ts" "$project_name" "$use_alias" ;;
+1) create_project "react" "$project_name" ;;
+2) create_project "react-ts" "$project_name" ;;
 esac
