@@ -60,7 +60,7 @@ create_project() {
   rm -f src/App.css
 
   # Dependencies
-  npm install axios dotenv tailwindcss@^4 @tailwindcss/vite@^4 lucide-react
+  npm install axios dotenv tailwindcss@^4 @tailwindcss/vite@^4 react-icons
   npm install -D @vitejs/plugin-react @types/node
 
   # -------------------------------
@@ -88,7 +88,7 @@ EOF
   # App Component
   # -------------------------------
   cat <<'EOF' >"./src/${app_file}"
-import { Terminal } from "lucide-react";
+import { BsFillTerminalFill } from "react-icons/bs";
 import Reactimg from "./assets/react.svg";
 import Viteimg from "./assets/vite.svg";
 
@@ -105,7 +105,7 @@ export default function App() {
         </h1>
         <p className="text-slate-400 flex items-center justify-center gap-2">
           Automated with Bash
-          <Terminal size={64} className="text-emerald-400" />
+          <BsFillTerminalFill size={64} className="text-emerald-400" />
         </p>
       </div>
     </main>
