@@ -54,7 +54,7 @@ create_project() {
   fi
 
   # Pass --yes to npm exec to prevent interactive package prompts
-  printf '\n' | npm exec --yes create-vite@latest "$project_name" -- --template "$template"
+  printf '\n' | npm exec --yes create-vite@latest "$project_name" -- --template "$template" >/dev/null
 
   cd "$project_name" || exit
   rm -f src/App.css
